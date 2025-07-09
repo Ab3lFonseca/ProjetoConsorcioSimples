@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consórcios</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: Arial, sans-serif; display: flex; }
+    .header {
+      position: fixed; top:0; left:0; width:100%; height:60px;
+      background-color: rgb(255,130,41);
+      display:flex; align-items:center; padding-left:30px;
+      color:white; font-weight:bold; font-size:20px;
+      z-index:1000;
+    }
+    #menu {
+      width:220px; height:100vh; background-color: rgb(255,208,147);
+      padding:30px 10px; margin-top:60px;
+    }
+    #menu div {
+      width:200px; margin:10px auto; padding:10px;
+      background-color:aliceblue; border-radius:7px; text-align:center;
+      cursor:pointer;
+    }
+    #content {
+      margin-left:240px; padding:100px 30px 30px; flex:1;
+    }
+    #gallery {
+      display:flex; flex-wrap:wrap; gap:20px;
+    }
+    .photo-item {
+      width:220px; background:#f5f5f5; padding:10px;
+      border-radius:8px; text-align:center;
+    }
+    .btn {
+      display:inline-block; margin:5px; padding:5px 10px;
+      background:#ff8229; color:white; border:none; border-radius:4px;
+      cursor:pointer; font-size:14px;
+    }
+    .btn-delete { background:#d9534f; }
+    .form-container {
+      margin-bottom:20px; background:#f0f0f0; padding:15px; border-radius:8px;
+    }
+    .form-container input {
+      margin:5px; padding:5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Consórcios</div>
+
+  <div id="menu">
+    <div id="veiculosButton"><p>Consórcio de veículos</p></div>
+    <div id="imoveisButton"><p>Consórcio de imóveis</p></div>
+    <div id="maquinariosButton"><p>Consórcio de maquinários</p></div>
+  </div>
+
+  <div id="content">
+    <h2>Total de consórcios: <span id="total-photos">0</span></h2>
+    
+    <div class="form-container">
+      <h3>Adicionar Consórcio</h3>
+      <input type="text" id="descricao" placeholder="Descrição" />
+      <input type="number" id="valor" placeholder="Valor" />
+      <input type="number" id="parcelas" placeholder="Parcelas" />
+      <input type="text" id="categoria" placeholder="Categoria" />
+      <button class="btn" onclick="addConsorcio()">Adicionar</button>
+    </div>
+
+    <div id="gallery"></div>
+  </div>
+
+  <script>
+    const apiUrl = 'http://localhost:8081/api/consorcios-front';
+    const apiPostUrl = 'http://localhost:8081/api/consorcios-front';
+    const apiDeleteUrl = 'http://localhost:8081/api/consorcios-front';
+
+    let allConsorcios = [];
+
+    async function fetchConsorcios() {
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('Erro na requisição');
+        allConsorcios = await response.json();
+        displayConsorcios(allConsorcios);
+      } catch (error) {
+        console.error('Erro ao carregar os consórcios:', error);
+      }
+    }
+
+    function displayConsorcios(consorcios) {
+      const gallery = document.getElementById('gallery');
+      const totalElement = document.getElementById('total-photos');
+      gallery.innerHTML = '';
+      totalElement.textContent = consorcios.length;
+
+      consorcios.forEach(item => {
+        const container = document.createElement('div');
+        container.classList.add('photo-item');
+
+        const title = document.createElement('h3');
+        title.textContent = item.descricao;
+
+        const valor = document.createElement('p');
+        valor.textContent = `Valor: R$ ${item.valor.toFixed(2)}`;
+
+        const parcelas = document.createElement('p');
+        parcelas.textContent = `Parcelas: ${item.parcelas}`;
+
+        const categoria = document.createElement('p');
+        categoria.textContent = `Categoria: ${item.categoria}`;
+
+        const data = document.createElement('p');
+        data.textContent = `Criado em: ${new Date(item.dataCriacao).toLocaleDateString('pt-BR')}`;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.classList.add('btn', 'btn-delete');
+        deleteBtn.textContent = 'Excluir';
+        deleteBtn.onclick = () => deleteConsorcio(item.id);
+
+        container.append(title, valor, parcelas, categoria, data, deleteBtn);
+        gallery.appendChild(container);
+      });
+    }
+
+    async function addConsorcio() {
+      const descricao = document.getElementById('descricao').value;
+      const valor = parseFloat(document.getElementById('valor').value);
+      const parcelas = parseInt(document.getElementById('parcelas').value);
+      const categoria = document.getElementById('categoria').value;
+
+      const novoConsorcio = {
+        descricao,
+        valor,
+        parcelas,
+        categoria,
+        dataCriacao: new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
+      };
+
+      try {
+        const response = await fetch(apiPostUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(novoConsorcio)
+        });
+        if (!response.ok) throw new Error('Erro ao adicionar consórcio');
+        alert('Consórcio adicionado com sucesso!');
+        fetchConsorcios();
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao adicionar consórcio');
+      }
+    }
+
+    async function deleteConsorcio(id) {
+      if (!confirm('Deseja excluir este consórcio?')) return;
+      try {
+        const response = await fetch(`${apiDeleteUrl}/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Erro ao excluir consórcio');
+        alert('Consórcio excluído com sucesso!');
+        fetchConsorcios();
+      } catch (error) {
+        console.error(error);
+        alert('Erro ao excluir consórcio');
+      }
+    }
+
+    // Filtro por categoria só para veículos, imóveis e maquinários
+    document.getElementById('veiculosButton').onclick = () => filterByCategory('Veículos');
+    document.getElementById('imoveisButton').onclick = () => filterByCategory('Imóveis');
+    document.getElementById('maquinariosButton').onclick = () => filterByCategory('Maquinários');
+
+    function filterByCategory(categoria) {
+      const filtrados = allConsorcios.filter(c => 
+        c.categoria && c.categoria.toLowerCase() === categoria.toLowerCase()
+      );
+      displayConsorcios(filtrados);
+    }
+
+    fetchConsorcios();
+  </script>
+</body>
+</html>
