@@ -98,6 +98,7 @@ Para desenvolvimento local, utilize appsettings.Development.json para configura�
 Este projeto foi desenvolvido apenas para fins educacionais e institucionais.
 Sinta-se livre para estudar, modificar e reutilizar. 🚀
 
-👨‍💻 Desenvolvido por
-Abel
-Desenvolvido como prática com ASP.NET Core e frontend estático em HTML/CSS/JS.
+```
+## 👨‍💻 Desenvolvido por
+- Abel
+- Desenvolvido como prática com ASP.NET Core e frontend estático em HTML/CSS/JS
